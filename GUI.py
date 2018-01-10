@@ -1,32 +1,7 @@
 import bluetooth
 import Tkinter as tki
 import threading
-"""
-def error_decorator(re):
-    def wrapper(f):
-        try:
-            print("in dec")
-            return f
-        except IOError:
-            print("Bluetooth Error")
-            re(self=None)
-    return wrapper
-"""
 
-class error_decorator:
-    def __init__(self,re):
-        self.re = re
-    
-    def __call__(self,func,*args,**kwargs):
-        def deco(*args,**kwargs):
-            try:
-                print(args)
-                print(kwargs)
-                return func(args,kwargs)
-            except IOError:
-                print("Connection error, reconnecting...")
-                return self.re
-        return deco(args,kwargs)
         
 class TS:
     def __init__(self):
