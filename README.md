@@ -14,4 +14,5 @@ This is a python client that allows you to control the focuser.
 
 ## Todo:
 Fix handshake/reconnection
+
 Make a mobile phone app client to control the focuser.
