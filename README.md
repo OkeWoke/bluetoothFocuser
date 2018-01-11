@@ -9,9 +9,9 @@ The speed is controllable through 4 pre set options, done via pwm.
 ## Arduino.ino 
 This is the program written for the arduino. 
 
-##GUI.py 
+## GUI.py 
 This is a python client that allows you to control the focuser. 
 
-##Todo:
+## Todo:
 Fix handshake/reconnection
 Make a mobile phone app client to control the focuser.
