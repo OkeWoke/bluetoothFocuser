@@ -1,40 +1,28 @@
 // Bluetooth Motor Controller for Astrophotography Telescope.
-// Version 2.0
+// Version 2.1
 // Author: Nico van Zyl
-// 11.1.18
+// 12.1.18
 
 // HC-06 Bluetooth module connected to Arduino Nano on RX and TX pins.
 // Motor will be driven with L293D dual H-brige motor driver.
 // L293D connected to Nano on digital pins 3 and 5.
-
+// Speed of the motor is controlled with Pulse Width Modulation of pins 3 or 5.
 
 // inChar will store the incoming byte before processing.
-// H will be imediately stop
 char inChar;
 
-const char Commands [] = {'A','B','C','D','Z','Y','X','W','H'};
-const int pwmVals [] = {64,128,191,255};
-const char ReceivedByte = 'O';
 // const chars are assigned as commands for talking between host pc and bluetooth device.
-// MUST be set up exactly the same on pc side.
+// must be set up EXACTLY the same on pc side.
+const char Commands [] = {'A','B','C','D','Z','Y','X','W'};
 
-/*
-const char Halt = 'H';
+// The duty cycle values are the full range of 0-255, incrementing in 25% steps.
+const int pwmVals [] = {64,128,191,255};
 
-// Four chars used for one direction, clockwise.
-const char CW25 = 'A';
-const char CW50 = 'B';
-const char CW75 = 'C';
-const char CW100 = 'D';
+// O will act as a handshake acknowledge.
+const char ReceivedByte = 'O';
 
-// Another four used for counter-clockwise.
-const char CCW25 = 'Z';
-const char CCW50 = 'Y';
-const char CCW75 = 'X';
-const char CCW100 = 'W';
-*/
-
-
+// H will be imediate stop.
+const char HChar = 'H';
 
 
 void setup() {
@@ -48,74 +36,21 @@ void setup() {
 
 void loop() {
  //For loop runs through the list of known commands, if it is known, associated PWM value is passed to appropriate direction function.
-  for (int i =0; i < sizeof(Commands)-1;i++){
-    if (inChar == Commands[i]){
-      if (Commands[i]=='H'){
-        Halt();
-      }
-      else if (i<4){
-        Clockwise(pwmVals[i]);
-      }
-      else if (i<8 && i>3){
-        CounterClockwise(pwmVals[i-4]);
+  if (inChar == 'H'){
+    Halt();
+  }
+  else{
+    for (int i =0; i < sizeof(Commands)-1;i++){
+      if (inChar == Commands[i]){
+        if (i<4){
+          Clockwise(pwmVals[i]);
+        }
+        else if (i<7 && i>3){
+          CounterClockwise(pwmVals[i-4]);
+        }
       }
     }
   }
-  //Serial.print(inChar);
-  //Serial.print("\n");
-  // ^ used for serial debugging, although interfered with pc side since this would also write to the Bluetooth module.
-/*
-  // Stop condition first to prevent and startup jitter.
-
-  if (inChar == Halt){
-    //
-    analogWrite(3,0);
-    analogWrite(5,0);
-    digitalWrite(13,LOW);
-  }
-  else{
-    switch (inChar){
-     
-      // analogWrite will output PWM
-      // First parameter of analogWrite is the pin, seconds param is PWM duty cycle, 0-255 or 0%-100%
-      // The duty cycle values are the full range, incrementing in 25% steps.
-      case CW25:
-        analogWrite(3,64);
-        digitalWrite(5,LOW);
-        break;
-      case CW50:
-        analogWrite(3,128);
-        digitalWrite(5,LOW);
-        //bluetoothReset();
-        break;
-      case CW75:
-        analogWrite(3,191);
-        digitalWrite(5,LOW);
-        break;
-      case CW100:
-        analogWrite(3,255);
-        digitalWrite(5,LOW);
-        break;
-      // Pins 3 and 5 change functions so that PWM signal applied to opposite poles of motor, allowing change of direction.
-      case CCW25:
-        analogWrite(5,64);
-        digitalWrite(3,LOW);
-        break;
-      case CCW50:
-        analogWrite(5,128);
-        digitalWrite(3,LOW);
-        break;
-      case CCW75:
-        analogWrite(5,191);
-        digitalWrite(3,LOW);
-        break;
-      case CCW100:
-        analogWrite(5,255);
-        digitalWrite(3,LOW);
-        break;
-    } 
-  }
-*/
 }
 
 void Halt(){
@@ -124,11 +59,14 @@ void Halt(){
   digitalWrite(13,LOW);
 }
 
+// analogWrite will output PWM signal.
+// First parameter of analogWrite is the pin, seconds param is PWM duty cycle, 0-255 or 0-100%.
 void Clockwise(int pwm){
   analogWrite(3,pwm);
   digitalWrite(5,LOW);
 }
 
+// Pins 3 and 5 change functions so that PWM signal applied to opposite poles of motor, allowing change of direction.
 void CounterClockwise (int pwm){
   analogWrite(5,pwm);
   digitalWrite(3,LOW);
