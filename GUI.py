@@ -2,7 +2,6 @@ import bluetooth
 import Tkinter as tki
 import threading
 
-        
 class TS:
     def __init__(self):
         """Creating the initial bluetooth connection and defining the char protocol"""
@@ -11,6 +10,7 @@ class TS:
         self.port = 1
         self.s = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
         self.s.connect((self.serverMACAddress, self.port))
+        self.isConnected = True
         self.CW = ["A","B","C","D"]
         self.CCW = ["Z","Y","X","W"]
         self.speed = 0#Default at 25%
@@ -19,9 +19,6 @@ class TS:
 
     def reconnect(self):
         """Handles the reconnection to the bluetooth module"""
-        #self.s = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-        if len(self.threads) >=1:
-            del self.threads[0:]
         try:
             self.s.close()
         except Exception as e:
@@ -36,8 +33,14 @@ class TS:
             try:
                 func(self,*arg)
             except IOError:
-                print("Bluetooth Error")
-                self.reconnect()
+                print("Bluetooth Error, attempting reconnection")
+                self.isConnected = False
+                try:
+                    self.reconnect()
+                    self.isConnected = True
+                    self.threads = []
+                except IOError:
+                    print("Reconnection failed, please get in range of the device")
                 
         return blah
     
@@ -46,7 +49,7 @@ class TS:
         """Handshaking between the arduino to check the connection is valid"""
         print("No: "+str(len(self.threads)))
         indexes_to_del = []
-        if len(self.threads)>3:
+        if len(self.threads)>2:
                     raise IOError
         for i in range(0,len(self.threads)):
             if not self.threads[i].is_alive():
@@ -75,9 +78,10 @@ class TS:
     @_deco
     def focus_Halt(self,e):
         """sends the H command to the arduino, halting the focuser, additionally has handshake verification"""
-        a = threading.Thread(target=self.handshake)
-        self.threads.append(a)
-        a.start()
+        if self.isConnected:
+            a = threading.Thread(target=self.handshake)
+            self.threads.append(a)
+            a.start()
         print("\nHalting focuser\n")
         self.s.send("H")
         
@@ -145,15 +149,16 @@ class App(TS):
        
     def checkConnection(self):
         """Handle GUI depending on connection status"""
-        if len(self.ts.threads) >2:
-            self.left_button.config(state = 'disabled')
-            self.right_button.confg(state = "disabled")
-        else:
+        if self.ts.isConnected:
             self.left_button.config(state = 'normal')
-            self.right_button.config(state = 'normal')
+            self.right_button.config(state = "normal")
+        else:
+            self.left_button.config(state = 'disabled')
+            self.right_button.config(state = 'disabled')
         
         self.left_button.update()
         self.right_button.update()
+        
         root.after(100,self.checkConnection)
         
         
